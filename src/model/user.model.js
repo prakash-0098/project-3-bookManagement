@@ -1,5 +1,7 @@
 const mongoose = require('mongoose'); 
 const IsEmail = require('isemail');
+const uniqueValidator = require('mongoose-unique-validator');
+const bcrypt = require('bcrypt'); 
 
 const userSchema = new mongoose.Schema({
     title: {
@@ -32,7 +34,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'The password field is required'],
         minlength: [8, 'The minimum Password length should be 8'],
-        maxlength: [15, 'The minimum Password length should be 15']
+        maxlength: [15, 'The maximum Password length should be 15']
     },
     address: {
         street: String,
@@ -42,6 +44,20 @@ const userSchema = new mongoose.Schema({
 },{
     timestamps: true
 }); 
+uniqueValidator.defaults.message = 'The {PATH} is already registered !'
+userSchema.plugin(uniqueValidator);
 
+// middleware
+userSchema.pre('save', function(next){
+    bcrypt.hash(this.password, 10).then((ecryptedPassword)=>{
+        this.password = ecryptedPassword; 
+        next(); 
+    }).catch((error)=>{
+        return res.status(500).send({
+            status: false,
+            message: error.message
+        }); 
+    }); 
+});
 
 module.exports = mongoose.model('User', userSchema); 
