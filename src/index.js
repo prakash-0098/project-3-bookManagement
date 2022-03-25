@@ -18,5 +18,5 @@ mongoose.connect(process.env.MONGODB_CLUSTER).then(()=>{
 app.use('/', router); 
 
 app.listen(process.env.PORT || 3000, ()=>{
-    console.log(`Server is running on Port ${process.env.PORT}`); 
+    console.log(`Server is running on Port ${process.env.PORT || 3000}`); 
 }); 
