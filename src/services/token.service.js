@@ -6,7 +6,7 @@ const create = (userId) => {
     }, process.env.JWT_SECRET_KEY, { expiresIn: '1h' });
 }
 /**
- * jwt.verify(token, secretOrPublicKey, callback) callback is an Asynchronous so we use Promiss
+ * @jwt.verify(token, secretOrPublicKey, callback) callback is an Asynchronous so we use Promiss
  */
 const verify = (res, token) => {
     return new Promise((resolve, reject) => {

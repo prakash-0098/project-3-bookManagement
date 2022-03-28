@@ -21,7 +21,7 @@ const createBook = async (req, res) => {
         }
         /**
          * moment.ISO_8601 is used to remove warning from terminal to prevent valid format of date
-         * @ isValid() return Boolean value
+         * @isValid method return Boolean value
          */
         const validateDate = moment(moment(releasedAt, moment.ISO_8601).format('YYYY-MM-DD'), 'YYYY-MM-DD', true).isValid();
         if (!validateDate) {
@@ -64,6 +64,14 @@ const getBooks = async (req, res) => {
                     status: false,
                     message: `Only this query params are allowed ${matchQuaryParams}`
                 });
+            }
+            if(filterData.userId){
+                if (!httpService.handleObjectId(filterData.userId)) {
+                    return res.status(400).send({
+                        status: false,
+                        message: 'Only Object Id is allowed !'
+                    });
+                }
             }
             filterData.isDeleted = false,
             filterData.deletedAt = null; 
@@ -134,7 +142,6 @@ const updateByBookId = async (req, res) => {
         const decodedToken = await tokenService.verifyToken(res, token);
 
         const bookId = req.params.bookId; 
-
         /**
          * Handle @mongoDb Object Id wheather it in proper format or not with the help @handleObjectId method
          * of cumtom module which is define in @httpService file
@@ -174,13 +181,18 @@ const updateByBookId = async (req, res) => {
                 message: 'Books not found !'
             });
         }
+        if(bookRes.isDeleted && !bookRes.deletedAt){
+            return res.status(404).send({
+                status: false,
+                message: 'Books not found !'
+            });
+        }
         if(bookRes.userId != decodedToken.userId){
             return res.status(403).send({
                 status: false,
                 message: 'You are not authorized !'
             });
         }
-
         const updateRes = await bookSchema.findByIdAndUpdate(bookId, data); 
         return res.status(200).send({
             status: true,
@@ -190,7 +202,7 @@ const updateByBookId = async (req, res) => {
     } catch (error) {
         /**
          * Handle unique field from the database 
-         * code: 11000 is duplicate data which is return by mongoose
+         * @code: 11000 is duplicate data which is return by @mongoose
          */
         if(error.code === 11000){
             const key = Object.keys(error['keyValue'])
@@ -206,8 +218,66 @@ const updateByBookId = async (req, res) => {
     }
 }
 
+const deleteBookById = async (req, res)=>{
+    try {
+        const token = req.headers['access-token'];
+        const decodedToken = await tokenService.verifyToken(res, token);
+
+        const bookId = req.params.bookId; 
+        /**
+         * Handle @mongoDb Object Id wheather it in proper format or not with the help @handleObjectId method
+         * of cumtom module which is define in @httpService file
+         */
+        if(!httpService.handleObjectId(bookId)){
+            return res.status(400).send({
+                status: false,
+                message: 'Only Object Id is allowed !'
+            });
+        }
+        const bookRes = await bookSchema.findById(bookId); 
+        if(!bookRes){
+            return res.status(404).send({
+                status: false,
+                message: 'Books not found !'
+            });
+        }
+        if(bookRes.userId != decodedToken.userId){
+            return res.status(403).send({
+                status: false,
+                message: 'You are not authorized !'
+            });
+        }
+        if(!bookRes.isDeleted && !bookRes.deletedAt){
+            const deleteRes = await bookSchema.findByIdAndUpdate(bookId, {
+                isDeleted: true,
+                deletedAt: new Date()
+            }, {
+                new: true
+            }); 
+            return res.status(200).send({
+                status: true,
+                message: 'Book deleted successfully !',
+                data: deleteRes
+            });
+        }
+        else{
+            return res.status(404).send({
+                status: false,
+                message: 'Book not found !'
+            });
+        }
+
+    } catch (error) {
+        return res.status(500).send({
+            status: false,
+            message: error.message
+        }); 
+    }
+}
+
 module.exports = {
     createBook,
     getBooks,
-    updateByBookId
+    updateByBookId,
+    deleteBookById
 }

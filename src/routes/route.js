@@ -14,6 +14,7 @@ router.get('/books', authMiddleware.auth, bookController.getBooks);
 // check later of get api by bookId
 
 router.put('/books/:bookId', authMiddleware.auth, bookController.updateByBookId); 
+router.delete('/books/:bookId', authMiddleware.auth, bookController.deleteBookById); 
 
 
 module.exports = router; 
