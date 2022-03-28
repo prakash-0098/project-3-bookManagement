@@ -10,7 +10,7 @@ const auth = async (req, res, next)=>{
                 message: 'Token must be required !'
             }); 
         }
-        const decodedToken = tokenService.verifyToken(res, token); 
+        const decodedToken = await tokenService.verifyToken(res, token); 
         if(decodedToken != undefined){
             const userRes = await userSchema.findById(decodedToken.userId); 
             if(!userRes){
