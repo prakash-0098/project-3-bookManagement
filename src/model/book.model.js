@@ -1,5 +1,6 @@
 const mongoose = require('mongoose'); 
 const uniqueValidator = require('mongoose-unique-validator');
+
 const bookSchema = new mongoose.Schema({
     title: {
         type: String,
@@ -36,9 +37,7 @@ const bookSchema = new mongoose.Schema({
     },
     reviews: {
         type: Number,
-        default: 0,
-        comment: Number,
-        trim: true ///check later
+        default: 0  //discuss
     },
     deletedAt: {
         type: Date,
@@ -50,7 +49,7 @@ const bookSchema = new mongoose.Schema({
     },
     releasedAt: {
         type: Date,
-        required: [true, 'The releasedAt field is required'] //check format format("YYYY-MM-DD")
+        required: [true, 'The releasedAt field is required'] //check format("YYYY-MM-DD")
     }
 
 }, {
@@ -58,6 +57,10 @@ const bookSchema = new mongoose.Schema({
 }); 
 
 uniqueValidator.defaults.message = 'The {PATH} is already registered !'
-userSchema.plugin(uniqueValidator);
+bookSchema.plugin(uniqueValidator);
+/**
+ * Add new property in book schema as releasedAt, which update its type String instead of Date
+ */
+bookSchema.add({releasedAt: String});
 
 module.exports = mongoose.model('Book', bookSchema); 

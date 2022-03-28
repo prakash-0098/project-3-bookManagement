@@ -9,7 +9,6 @@ const reviewSchema = new mongoose.Schema({
     },
     reviewedBy:{
         type: String,
-        required: [true, 'The reviewedBy field is required'],
         default: 'Guest',
         value: String,
         trim: true
