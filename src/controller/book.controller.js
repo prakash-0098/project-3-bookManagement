@@ -1,6 +1,7 @@
 const bookSchema = require('../model/book.model'); 
 const httpService = require('../services/http-errors.service'); 
 const moment = require('moment'); 
+const res = require('express/lib/response');
 
 const createBook = async (req, res)=>{
     try{
@@ -40,7 +41,18 @@ const createBook = async (req, res)=>{
         httpService.handleError(res, error); 
     }
 }
-
+const getBooks = async (req,res)=>{
+try{
+    const data = req.query;
+    let filter = {
+        isDeleted : false,
+        
+    }
+}
+catch(err){
+    return res().status(500).send({"Error": err.message})
+}
+}
 module.exports = {
-    createBook
+    createBook,getBooks
 }
