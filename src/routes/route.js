@@ -11,6 +11,9 @@ router.post('/login', userController.login);
 
 router.post('/book', authMiddleware.auth, bookController.createBook); 
 router.get('/books', authMiddleware.auth, bookController.getBooks);
+// check later of get api by bookId
+
+router.put('/books/:bookId', authMiddleware.auth, bookController.updateByBookId); 
 
 
 module.exports = router; 

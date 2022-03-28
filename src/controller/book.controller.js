@@ -42,84 +42,172 @@ const createBook = async (req, res) => {
     }
 }
 const getBooks = async (req, res) => {
-    const token = req.headers['access-token'];
-    const decodedToken = await tokenService.verifyToken(res, token);
+    try {
+        const token = req.headers['access-token'];
+        const decodedToken = await tokenService.verifyToken(res, token);
 
-    const filterData = req.query;
-    const key = Object.keys(filterData);
-    if (key.length > 0) {
-        const matchQuaryParams = ['userId', 'category', 'subcategory'];
-        let status = false;
-        for (let i = 0; i < matchQuaryParams.length; i++) {
-            if (matchQuaryParams.indexOf(key.toString()) != -1) {
-                status = true;
+        const filterData = req.query;
+        const key = Object.keys(filterData);
+        if (key.length > 0) {
+            const matchQuaryParams = ['userId', 'category', 'subcategory'];
+            let status = false;
+            for (let i = 0; i < matchQuaryParams.length; i++) {
+                if (matchQuaryParams.indexOf(key.toString()) != -1) {
+                    status = true;
+                }
+                else {
+                    status = false;
+                }
             }
-            else {
-                status = false;
+            if (!status) {
+                return res.status(400).send({
+                    status: false,
+                    message: `Only this query params are allowed ${matchQuaryParams}`
+                });
             }
-        }
-        if (!status) {
-            return res.status(400).send({
-                status: false,
-                message: `Only this query params are allowed ${matchQuaryParams}`
+            filterData.isDeleted = false,
+            filterData.deletedAt = null; 
+            const fetchBooks = await bookSchema.find(filterData).select({
+                _id: 1,
+                title: 1,
+                excerpt: 1,
+                userId: 1,
+                category: 1,
+                releasedAt: 1,
+                reviews: 1
+            }).sort({
+                title: 1
+            });
+            const filterRes = fetchBooks.filter((data) => {
+                return data.userId == decodedToken.userId
+            });
+            if (filterRes.length == 0) {
+                return res.status(403).send({
+                    status: false,
+                    message: 'You are not authorized !'
+                });
+            }
+            return res.status(200).send({
+                status: true,
+                count: filterRes.length,
+                data: filterRes
             });
         }
-        const fetchBooks = await bookSchema.find(filterData).select({
-            _id: 1,
-            title: 1,
-            excerpt: 1,
-            userId: 1,
-            category: 1,
-            releasedAt: 1,
-            reviews: 1
-        }).sort({
-            title: 1
-        });
-        const filterRes = fetchBooks.filter((data) => {
-            return data.userId == decodedToken.userId
-        });
-        if (filterRes.length == 0) {
-            return res.status(403).send({
-                status: false,
-                message: 'You are not authorized !'
+        else {
+            const fetchBooks = await bookSchema.find({
+                userId: decodedToken.userId,
+                isDeleted: false,
+                deletedAt: null
+            }).select({
+                _id: 1,
+                title: 1,
+                excerpt: 1,
+                userId: 1,
+                category: 1,
+                releasedAt: 1,
+                reviews: 1
+            }).sort({
+                title: 1
+            });
+            if (fetchBooks.length == 0) {
+                return res.status(404).send({
+                    status: false,
+                    message: 'Books not found !'
+                });
+            }
+            return res.status(200).send({
+                status: true,
+                count: fetchBooks.length,
+                data: fetchBooks
             });
         }
-        return res.status(200).send({
-            status: true,
-            count: filterRes.length,
-            data: filterRes
+    } catch (error) {
+        return res.status(500).send({
+            status: false,
+            message: error.message
         });
     }
-    else {
-        const fetchBooks = await bookSchema.find({
-            userId: decodedToken.userId,
-            isDeleted: false,
-            deletedAt: null
-        }).select({
-            _id: 1,
-            title: 1,
-            excerpt: 1,
-            userId: 1,
-            category: 1,
-            releasedAt: 1,
-            reviews: 1
-        }).sort({
-            title: 1
-        });
-        if (fetchBooks.length == 0) {
+}
+const updateByBookId = async (req, res) => {
+    try {
+        const token = req.headers['access-token'];
+        const decodedToken = await tokenService.verifyToken(res, token);
+
+        const bookId = req.params.bookId; 
+
+        /**
+         * Handle @mongoDb Object Id wheather it in proper format or not with the help @handleObjectId method
+         * of cumtom module which is define in @httpService file
+         */
+        if(!httpService.handleObjectId(bookId)){
+            return res.status(400).send({
+                status: false,
+                message: 'Only Object Id is allowed !'
+            });
+        }
+
+        const data = req.body; 
+        const key = Object.keys(data);
+        const matchUpdateParams = ['title', 'excerpt', 'releasedAt', 'ISBN'];
+            let status = false;
+            for (let i = 0; i < matchUpdateParams.length; i++) {
+                key.forEach((data)=>{
+                        if (matchUpdateParams.indexOf(data.toString()) != -1) {
+                        status = true;
+                    }
+                    else{
+                        status = false; 
+                    }
+                }); 
+            }
+            if (!status) {
+                return res.status(400).send({
+                    status: false,
+                    message: `Only these body params are allowed ${matchUpdateParams}`
+                });
+            }
+
+        const bookRes = await bookSchema.findById(bookId); 
+        if(!bookRes){
             return res.status(404).send({
                 status: false,
                 message: 'Books not found !'
             });
         }
+        if(bookRes.userId != decodedToken.userId){
+            return res.status(403).send({
+                status: false,
+                message: 'You are not authorized !'
+            });
+        }
+
+        const updateRes = await bookSchema.findByIdAndUpdate(bookId, data); 
         return res.status(200).send({
             status: true,
-            count: fetchBooks.length,
-            data: fetchBooks
+            message: `${key.length} field updated successfully !`
         });
+
+    } catch (error) {
+        /**
+         * Handle unique field from the database 
+         * code: 11000 is duplicate data which is return by mongoose
+         */
+        if(error.code === 11000){
+            const key = Object.keys(error['keyValue'])
+            return res.status(400).send({
+                status: false,
+                message: `The ${key} value is already exist !`
+            }); 
+        }
+        return res.status(500).send({
+            status: false,
+            message: error.message
+        }); 
     }
 }
+
 module.exports = {
     createBook,
-    getBooks
+    getBooks,
+    updateByBookId
 }
