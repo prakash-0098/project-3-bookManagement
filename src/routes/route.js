@@ -12,7 +12,7 @@ router.post('/login', userController.login);
 
 router.post('/book', authMiddleware.auth, bookController.createBook); 
 router.get('/books', authMiddleware.auth, bookController.getBooks);
-// check later of get api by bookId
+router.get('/books/:bookId', authMiddleware.auth, bookController.getBooksByIdWithReviews); 
 
 router.put('/books/:bookId', authMiddleware.auth, bookController.updateByBookId); 
 router.delete('/books/:bookId', authMiddleware.auth, bookController.deleteBookById); 
@@ -20,7 +20,8 @@ router.delete('/books/:bookId', authMiddleware.auth, bookController.deleteBookBy
 // router for review
 
 router.post('/books/:bookId/review', authMiddleware.auth, reviewController.addReview); 
-
+router.put('/books/:bookId/review/:reviewId', authMiddleware.auth, reviewController.updateReview);
+router.delete('/books/:bookId/review/:reviewId', authMiddleware.auth, reviewController.deleteReview); 
 
 
 module.exports = router; 

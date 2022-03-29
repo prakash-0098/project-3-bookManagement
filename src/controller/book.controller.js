@@ -1,4 +1,5 @@
 const bookSchema = require('../model/book.model');
+const reviewSchema = require('../model/review.model'); 
 const httpService = require('../services/http-errors.service');
 const tokenService = require('../services/token.service');
 const moment = require('moment');
@@ -136,6 +137,62 @@ const getBooks = async (req, res) => {
         });
     }
 }
+
+const getBooksByIdWithReviews = async (req, res)=>{
+    try {
+        const token = req.headers['access-token'];
+        const decodedToken = await tokenService.verifyToken(res, token);
+
+        const bookId = req.params.bookId; 
+        /**
+         * Handle @mongoDb Object Id wheather it in proper format or not with the help @handleObjectId method
+         * of cumtom module which is define in @httpService file
+         */
+         if(!httpService.handleObjectId(bookId)){
+            return res.status(400).send({
+                status: false,
+                message: 'Only Object Id is allowed !'
+            });
+        }
+        const bookRes = await bookSchema.findById(bookId); 
+        if(!bookRes){
+            return res.status(404).send({
+                status: false,
+                message: 'Books not found !'
+            });
+        }
+        if (bookRes.userId != decodedToken.userId) {
+            return res.status(403).send({
+                status: false,
+                message: 'You are not authorized !'
+            });
+        }
+
+        const reviewRes = await reviewSchema.find({
+            bookId: bookId,
+            isDeleted: false
+        }); 
+
+        /**
+         * Here we cannot add extra property on bookRes which is return from mongoose, 
+         * so we use @toObject method to covert it in a plain javascript Object
+         */
+         const allData = bookRes.toObject();
+         allData.reviewsData = reviewRes;
+ 
+         return res.status(200).send({
+             status: true,
+             message: 'Book Information',
+             data: allData
+         });
+    } catch (error) {
+        return res.status(500).send({
+            status: false,
+            message: error.message
+        });
+    } 
+}
+
 const updateByBookId = async (req, res) => {
     try {
         const token = req.headers['access-token'];
@@ -278,6 +335,7 @@ const deleteBookById = async (req, res)=>{
 module.exports = {
     createBook,
     getBooks,
+    getBooksByIdWithReviews,
     updateByBookId,
     deleteBookById
 }
