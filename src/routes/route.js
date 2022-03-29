@@ -16,5 +16,10 @@ router.get('/books', authMiddleware.auth, bookController.getBooks);
 router.put('/books/:bookId', authMiddleware.auth, bookController.updateByBookId); 
 router.delete('/books/:bookId', authMiddleware.auth, bookController.deleteBookById); 
 
+// router for review
+
+router.post('/books/:bookId/review')
+
+
 
 module.exports = router; 
