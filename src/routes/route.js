@@ -3,6 +3,7 @@ const router = express.Router();
 
 const userController = require('../controller/user.controller');
 const bookController = require('../controller/book.controller'); 
+const reviewController = require('../controller/review.controller'); 
 
 const authMiddleware = require('../middleware/auth.middleware');
 
@@ -18,7 +19,7 @@ router.delete('/books/:bookId', authMiddleware.auth, bookController.deleteBookBy
 
 // router for review
 
-router.post('/books/:bookId/review')
+router.post('/books/:bookId/review', authMiddleware.auth, reviewController.addReview); 
 
 
 
