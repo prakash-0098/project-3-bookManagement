@@ -13,7 +13,7 @@ const addReview = async (req, res) => {
         const data = req.body;
         const { reviewedAt } = data;
 
-        if (!httpService.handleObjectId(bookId) || !httpService.handleObjectId(data.bookId)) {
+        if (!httpService.handleObjectId(bookId)) {
             return res.status(400).send({
                 status: false,
                 message: 'Only Object Id is allowed !'
@@ -39,23 +39,26 @@ const addReview = async (req, res) => {
                 message: 'Book not found'
             });
         }
-        if (reviewedAt.length != 10) {
-            return res.status(400).send({
-                status: false,
-                message: '[YYYY-MM-DD] format is allowed !'
-            });
+        if(reviewedAt != undefined){
+            if (reviewedAt.length != 10) {
+                return res.status(400).send({
+                    status: false,
+                    message: '[YYYY-MM-DD] format is allowed !'
+                });
+            }
+            /**
+             * moment.ISO_8601 is used to remove warning from terminal to prevent valid format of date
+             * @isValid method return Boolean value
+             */
+            const validateDate = moment(moment(reviewedAt, moment.ISO_8601).format('YYYY-MM-DD'), 'YYYY-MM-DD', true).isValid();
+            if (!validateDate) {
+                return res.status(400).send({
+                    status: false,
+                    message: '[YYYY-MM-DD] format is allowed !'
+                });
+            }
         }
-        /**
-         * moment.ISO_8601 is used to remove warning from terminal to prevent valid format of date
-         * @isValid method return Boolean value
-         */
-        const validateDate = moment(moment(reviewedAt, moment.ISO_8601).format('YYYY-MM-DD'), 'YYYY-MM-DD', true).isValid();
-        if (!validateDate) {
-            return res.status(400).send({
-                status: false,
-                message: '[YYYY-MM-DD] format is allowed !'
-            });
-        }
+        
         const insertedRes = await reviewSchema.create(data);
         const bookUpdateRes = await bookSchema.findByIdAndUpdate(bookId, {
             $inc: {

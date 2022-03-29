@@ -51,13 +51,14 @@ const getBooks = async (req, res) => {
         const key = Object.keys(filterData);
         if (key.length > 0) {
             const matchQuaryParams = ['userId', 'category', 'subcategory'];
-            let status = false;
-            for (let i = 0; i < matchQuaryParams.length; i++) {
-                if (matchQuaryParams.indexOf(key.toString()) != -1) {
-                    status = true;
-                }
-                else {
-                    status = false;
+            let status = false; 
+            for(let i = 0; i < key.length; i++){
+                if(matchQuaryParams.includes(key[i])){
+                    status = true; 
+                } 
+                else{
+                    status = false; 
+                    break; 
                 }
             }
             if (!status) {
@@ -66,6 +67,7 @@ const getBooks = async (req, res) => {
                     message: `Only this query params are allowed ${matchQuaryParams}`
                 });
             }
+            
             if(filterData.userId){
                 if (!httpService.handleObjectId(filterData.userId)) {
                     return res.status(400).send({

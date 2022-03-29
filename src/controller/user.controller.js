@@ -1,6 +1,7 @@
 const userSchema = require('../model/user.model'); 
 const httpService = require('../services/http-errors.service');
 const tokenService = require('../services/token.service');
+const IsEmail = require('isemail'); 
 const bcrypt = require('bcrypt'); 
 
 const userRegister = async (req, res)=>{
@@ -20,6 +21,18 @@ const userRegister = async (req, res)=>{
 const login = async (req, res)=>{
     try {
         const { email, password } = req.body; 
+        if(!email || !password){
+            return res.status(400).send({
+                status: false,
+                message: 'Email and Pasword both are compulsary !' 
+            }); 
+        }
+        if(!IsEmail.validate(email)){
+            return res.status(400).send({
+                status: false,
+                message: `${email} is not a valid Email Id !`
+            });
+        }
         const emailRes = await userSchema.findOne({email: email});  
         if(!emailRes){
             return res.status(404).send({
