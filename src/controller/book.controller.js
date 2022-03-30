@@ -213,6 +213,26 @@ const updateByBookId = async (req, res) => {
         }
 
         const data = req.body; 
+        const { releasedAt } = data; 
+
+        if (releasedAt.length != 10) {
+            return res.status(400).send({
+                status: false,
+                message: '[YYYY-MM-DD] format is allowed !'
+            });
+        }
+        /**
+         * moment.ISO_8601 is used to remove warning from terminal to prevent valid format of date
+         * @isValid method return Boolean value
+         */
+        const validateDate = moment(moment(releasedAt, moment.ISO_8601).format('YYYY-MM-DD'), 'YYYY-MM-DD', true).isValid();
+        if (!validateDate) {
+            return res.status(400).send({
+                status: false,
+                message: '[YYYY-MM-DD] format is allowed !'
+            });
+        }
+
         const key = Object.keys(data);
         const matchUpdateParams = ['title', 'excerpt', 'releasedAt', 'ISBN'];
             let status = false;
