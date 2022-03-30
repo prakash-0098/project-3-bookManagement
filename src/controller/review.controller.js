@@ -58,10 +58,20 @@ const addReview = async (req, res) => {
         }, {
             new: true
         });
+        const allReviewsRes = await reviewSchema.find({
+            bookId: bookId,
+            isDeleted: false
+        });
+        /**
+         * Here we cannot add extra property on bookRes which is return from mongoose, 
+         * so we use @toObject method to covert it in a plain javascript Object
+         */
+        const allData = bookUpdateRes.toObject(); 
+        allData.reviewsData = allReviewsRes; 
         return res.status(201).send({
             status: true,
             message: "Review inserted successfully !",
-            data: bookUpdateRes
+            data: allData
         });
 
     } catch (error) {

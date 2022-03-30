@@ -251,10 +251,13 @@ const updateByBookId = async (req, res) => {
                 message: 'You are not authorized !'
             });
         }
-        const updateRes = await bookSchema.findByIdAndUpdate(bookId, data); 
+        const updateRes = await bookSchema.findByIdAndUpdate(bookId, data, {
+            new: true
+        }); 
         return res.status(200).send({
             status: true,
-            message: `${key.length} field updated successfully !`
+            message: `${key.length} field updated successfully !`,
+            data: updateRes
         });
 
     } catch (error) {
