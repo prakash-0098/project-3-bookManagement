@@ -216,15 +216,14 @@ const updateByBookId = async (req, res) => {
         const key = Object.keys(data);
         const matchUpdateParams = ['title', 'excerpt', 'releasedAt', 'ISBN'];
             let status = false;
-            for (let i = 0; i < matchUpdateParams.length; i++) {
-                key.forEach((data)=>{
-                        if (matchUpdateParams.indexOf(data.toString()) != -1) {
-                        status = true;
-                    }
-                    else{
-                        status = false; 
-                    }
-                }); 
+            for(let i = 0; i < key.length; i++){
+                if(matchUpdateParams.includes(key[i])){
+                    status = true; 
+                } 
+                else{
+                    status = false; 
+                    break; 
+                }
             }
             if (!status) {
                 return res.status(400).send({
