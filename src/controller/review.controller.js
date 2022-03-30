@@ -6,9 +6,6 @@ const moment = require('moment');
 
 const addReview = async (req, res) => {
     try {
-        const token = req.headers['access-token'];
-        const decodedToken = await tokenService.verifyToken(res, token);
-
         const bookId = req.params.bookId;
         const data = req.body;
         const { reviewedAt } = data;
@@ -25,12 +22,6 @@ const addReview = async (req, res) => {
             return res.status(404).send({
                 status: false,
                 message: 'Book not found'
-            });
-        }
-        if (bookRes.userId != decodedToken.userId) {
-            return res.status(403).send({
-                status: false,
-                message: 'You are not authorized !'
             });
         }
         if (bookRes.isDeleted && !bookRes.deletedAt) {
@@ -90,21 +81,28 @@ const updateReview = async (req, res) => {
         const key = Object.keys(data);
         const matchUpdateParams = ['review', 'rating', `reviewer's name`];
         let status = false;
-        for (let i = 0; i < matchUpdateParams.length; i++) {
-            key.forEach((data) => {
-                if (matchUpdateParams.indexOf(data.toString()) != -1) {
-                    status = true;
-                }
-                else {
-                    status = false;
-                }
-            });
+        for(let i = 0; i < key.length; i++){
+            if(matchUpdateParams.includes(key[i])){
+                status = true; 
+            } 
+            else{
+                status = false; 
+                break; 
+            }
         }
         if (!status) {
             return res.status(400).send({
                 status: false,
                 message: `Only these body params are allowed ${matchUpdateParams}`
             });
+        }
+        if(data.rating != undefined){
+            if(!(data.rating >= 1 && data.rating <= 5)){
+                return res.status(400).send({
+                    status: false,
+                    message: 'Rating range should be in between 1 to 5'
+                }); 
+            }
         }
         /**
          * Add the @reviewedBy property instead of @reviewer's name
@@ -155,16 +153,18 @@ const updateReview = async (req, res) => {
         }
 
         // update review document
-        const updateRes = await reviewSchema.findByIdAndUpdate(reviewId, data, {
-            new: true
+        const updateRes = await reviewSchema.findByIdAndUpdate(reviewId, data);
+        const allReviewsRes = await reviewSchema.find({
+            bookId: bookId,
+            isDeleted: false
         });
-
+        
         /**
          * Here we cannot add extra property on bookRes which is return from mongoose, 
          * so we use @toObject method to covert it in a plain javascript Object
          */
         const allData = bookRes.toObject();
-        allData.reviewsData = updateRes;
+        allData.reviewsData = allReviewsRes;
 
         return res.status(200).send({
             status: true,
