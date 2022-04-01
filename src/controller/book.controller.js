@@ -44,9 +44,6 @@ const createBook = async (req, res) => {
 }
 const getBooks = async (req, res) => {
     try {
-        const token = req.headers['access-token'];
-        const decodedToken = await tokenService.verifyToken(res, token);
-
         const filterData = req.query;
         const key = Object.keys(filterData);
         if (key.length > 0) {
@@ -89,24 +86,14 @@ const getBooks = async (req, res) => {
             }).sort({
                 title: 1
             });
-            const filterRes = fetchBooks.filter((data) => {
-                return data.userId == decodedToken.userId
-            });
-            if (filterRes.length == 0) {
-                return res.status(403).send({
-                    status: false,
-                    message: 'You are not authorized !'
-                });
-            }
             return res.status(200).send({
                 status: true,
-                count: filterRes.length,
-                data: filterRes
+                count: fetchBooks.length,
+                data: fetchBooks
             });
         }
         else {
             const fetchBooks = await bookSchema.find({
-                userId: decodedToken.userId,
                 isDeleted: false,
                 deletedAt: null
             }).select({
@@ -142,9 +129,6 @@ const getBooks = async (req, res) => {
 
 const getBooksByIdWithReviews = async (req, res)=>{
     try {
-        const token = req.headers['access-token'];
-        const decodedToken = await tokenService.verifyToken(res, token);
-
         const bookId = req.params.bookId; 
         /**
          * Handle @mongoDb Object Id wheather it in proper format or not with the help @handleObjectId method
@@ -161,12 +145,6 @@ const getBooksByIdWithReviews = async (req, res)=>{
             return res.status(404).send({
                 status: false,
                 message: 'Books not found !'
-            });
-        }
-        if (bookRes.userId != decodedToken.userId) {
-            return res.status(403).send({
-                status: false,
-                message: 'You are not authorized !'
             });
         }
 

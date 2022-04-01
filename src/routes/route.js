@@ -10,7 +10,7 @@ const authMiddleware = require('../middleware/auth.middleware');
 router.post('/register', userController.userRegister); 
 router.post('/login', userController.login); 
 
-router.post('/book', authMiddleware.auth, bookController.createBook); 
+router.post('/books', authMiddleware.auth, bookController.createBook); 
 router.get('/books', authMiddleware.auth, bookController.getBooks);
 router.get('/books/:bookId', authMiddleware.auth, bookController.getBooksByIdWithReviews); 
 
