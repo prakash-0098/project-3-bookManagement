@@ -63,10 +63,10 @@ uniqueValidator.defaults.message = 'The {PATH} is already registered !'
 userSchema.plugin(uniqueValidator);
 
 /**
- * Convert plain password to hash with the help of bcrypt algorithm. 
+ * Convert plain password to hash with the help of @bcrypt algorithm. 
  * Basically, it converts a fixed length of password i.e., 60 character
  * 
- * @ pre is built-in middleware of mongoose which perform the operation brefore inserting the data in the mongoDB.
+ * @pre is built-in middleware of mongoose which perform the operation brefore inserting the data in the mongoDB.
  */
 userSchema.pre('save', function(next){
     bcrypt.hash(this.password, 10).then((ecryptedPassword)=>{
