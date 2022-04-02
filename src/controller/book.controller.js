@@ -86,6 +86,12 @@ const getBooks = async (req, res) => {
             }).sort({
                 title: 1
             });
+            if (fetchBooks.length == 0) {
+                return res.status(404).send({
+                    status: false,
+                    message: 'Books not found !'
+                });
+            }
             return res.status(200).send({
                 status: true,
                 count: fetchBooks.length,
